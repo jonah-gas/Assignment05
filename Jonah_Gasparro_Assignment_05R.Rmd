@@ -6,11 +6,50 @@ output: html_document
 ---
 
 ```{r}
-#test
+#set working directory 
+setwd("C:/Users/johan_nii2lon/OneDrive/Desktop/Data Science Porject Management/Assigements/Assignment 5/Assignment05")
+
+#import needed packages
+library(jsonlite)
+library(httr)
+library(rlist)
+library(tidyverse)
+
+
 ```
 
 
 ```{r}
+#load key
+
+source("C:/Users/johan_nii2lon/OneDrive/Desktop/Data Science Porject Management/Assigements/Assignment 5/Api_key.R")
+
+apicountry <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/", 
+            query = list(apikey = api_key,
+                        "countryCode"= "DE"))
+
+apiconde <- content(apicountry)
+
+
+
+venues <- data.frame("name"= NULL, "city"=NULL, "postalCode"=NULL, "address"=NULL, "url"=NULL, "longitude"= NULL, "latitude" = NULL)
+
+apicountrypage1 <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/", 
+            query= list(apikey = api_key,
+                        "countryCode"= "DE", 
+                        page=1))
+
+apicondepage1 <- content(apicountrypage1)
+
+x<-(apiconde$`_embedded`$venues)
+
+for (i in 1.20){
+x <- apiconde$`_embedded`$venues.enlist[[i]]
+
+
+  }
+
+list.stack(apiconde$`_embedded`$venues, data.table = FALSE)
 
 ```
 
