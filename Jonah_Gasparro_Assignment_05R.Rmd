@@ -19,6 +19,7 @@ library(tidyverse)
 ```
 
 
+##Exercise 7+8
 ```{r}
 #load key
 
@@ -30,33 +31,124 @@ apicountry <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
 
 apiconde <- content(apicountry)
 
+venues <- apiconde$`_embedded`$venues
 
+length(venues)
 
-venues <- data.frame("name"= NULL, "city"=NULL, "postalCode"=NULL, "address"=NULL, "url"=NULL, "longitude"= NULL, "latitude" = NULL)
+#extract names out of venues
+name <- map_chr(venues, "name")
 
-apicountrypage1 <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/", 
-            query= list(apikey = api_key,
-                        "countryCode"= "DE", 
-                        page=1))
+#extract city out of venues
+city_list <- map(venues, "city")
+city <- map_chr(city_list, "name")
 
-apicondepage1 <- content(apicountrypage1)
+#extract postal code out of venues
+postalCode <- as.double(map_chr(venues, "postalCode", .default = NA))
 
-x<-(apiconde$`_embedded`$venues)
+#extract address form venues
+address_list <- map(venues, "address")
+address <- map_chr(address_list, "line1", .default = NA)
 
-for (i in 1.20){
-x <- apiconde$`_embedded`$venues.enlist[[i]]
+#extract url from venues
+url <- map_chr(venues, "url")
 
+#extract longitude and magnitude
+location <- map(venues, "location")
+longitude <- as.double(map_chr(location, "longitude", .default = NA))
+latitude <- as.double(map_chr(location, "latitude", .default = NA))
 
-  }
+#put it all together
+df = data.frame(name, city, postalCode, address, url, longitude, latitude)
 
-list.stack(apiconde$`_embedded`$venues, data.table = FALSE)
-
+head(df)
 ```
 
 
+##Exercise 9
 ```{r}
-```
+df<-function(country){
+  
 
+apicountry <-
+  GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
+      query = list(apikey = api_key,
+                   "countryCode" = country))
+Sys.sleep(0.2)
+apiconde <- content(apicountry)
+page <- apiconde$page$totalPages
+entries <- apiconde$page$page$size
+
+venues <- list()
+df2 <- tibble()
+
+for (i in 0:(page-1)) {
+ venues <- NULL 
+ while(is.null(venues)){
+  api <-GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
+          query = list(
+            apikey = api_key,
+            "countryCode" = "DE",
+            page = i
+          ))
+    content <- content(api)
+    
+    venues <- content$`_embedded`$venues
+    venues <- c(venues, content$`_embedded`$venues)
+ }
+ if (i==page-1){
+   entries=apiconde$page$totalElements %%entries
+ }
+
+  
+#extract names out of venues
+ name <- map_chr(venues, "name", .default=NA)
+  
+
+
+#extract city out of venues
+city_list <- map(venues, "city")
+city <- map_chr(city_list, "name",.default=NA)
+
+#extract postal code out of venues
+postalCode <- as.double(map_chr(venues, "postalCode", .default = NA))
+
+#extract address form venues
+address_list <- map(venues, "address")
+address <- map_chr(address_list, "line1", .default = NA)
+
+#extract url from venues
+url <- map_chr(venues, "url", .default = NA)
+
+#extract longitude and magnitude
+location <- map(venues, "location")
+longitude <- as.double(map_chr(location, "longitude", .default = NA))
+latitude <- as.double(map_chr(location, "latitude", .default = NA))
+
+#put it all together
+df_page = data.frame(name, city, postalCode, address, url, longitude, latitude)
+
+df2 <- rbind(df2, df_page)
+
+}
+return(df2)
+}
+
+dfde <-df("DE")
+```
+##Exercise 10
+```{r}
+ggplot(dfde) +
+geom_point(aes(longitude, latitude))+
+borders("world", "Germany", colour = "black", fill = "grey90") +
+  geom_point(aes(longitude, latitude), alpha=0.3)+
+theme_void() +
+coord_quickmap() +
+labs(title = "Event locations across Germany",
+caption = "Source: ticketmaster.com") +
+theme(title = element_text(size=8, face='bold'),
+plot.caption = element_text(face = "italic"))
+
+```
 
 
 
