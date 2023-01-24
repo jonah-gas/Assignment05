@@ -61,94 +61,149 @@ latitude <- as.double(map_chr(location, "latitude", .default = NA))
 df = data.frame(name, city, postalCode, address, url, longitude, latitude)
 
 head(df)
+
 ```
 
 
 ##Exercise 9
 ```{r}
-df<-function(country){
+df <- function(country) {
+  apicountry <-
+    GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
+        query = list(apikey = api_key,
+                     "countryCode" = country))
+  Sys.sleep(0.2)
+  apiconde <- content(apicountry)
+  page <- apiconde$page$totalPages
+  entries <- apiconde$page$page$size
   
-
-apicountry <-
-  GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
-      query = list(apikey = api_key,
-                   "countryCode" = country))
-Sys.sleep(0.2)
-apiconde <- content(apicountry)
-page <- apiconde$page$totalPages
-entries <- apiconde$page$page$size
-
-venues <- list()
-df2 <- tibble()
-
-for (i in 0:(page-1)) {
- venues <- NULL 
- while(is.null(venues)){
-  api <-GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
-          query = list(
-            apikey = api_key,
-            "countryCode" = "DE",
-            page = i
-          ))
-    content <- content(api)
+  venues <- list()
+  df2 <- tibble()
+  
+  for (i in 0:(page - 1)) {
+    venues <- NULL
+    while (is.null(venues)) {
+      api <- GET(
+        url = "https://app.ticketmaster.com/discovery/v2/venues/",
+        query = list(
+          apikey = api_key,
+          "countryCode" = country,
+          page = i
+        )
+      )
+      content <- content(api)
+      
+      venues <- content$`_embedded`$venues
+      
+    }
+    if (i == page - 1) {
+      entries = apiconde$page$totalElements %% entries
+    }
     
-    venues <- content$`_embedded`$venues
-    venues <- c(venues, content$`_embedded`$venues)
- }
- if (i==page-1){
-   entries=apiconde$page$totalElements %%entries
- }
-
+    
+    #extract names out of venues
+    name <- map_chr(venues, "name", .default = NA)
+    
+    
+    
+    #extract city out of venues
+    city_list <- map(venues, "city")
+    city <- map_chr(city_list, "name", .default = NA)
+    
+    #extract postal code out of venues
+    postalCode <-
+      as.double(map_chr(venues, "postalCode", .default = NA))
+    
+    #extract address form venues
+    address_list <- map(venues, "address")
+    address <- map_chr(address_list, "line1", .default = NA)
+    
+    #extract url from venues
+    url <- map_chr(venues, "url", .default = NA)
+    
+    #extract longitude and magnitude
+    location <- map(venues, "location")
+    longitude <-
+      as.double(map_chr(location, "longitude", .default = NA))
+    latitude <- as.double(map_chr(location, "latitude", .default = NA))
+    
+    #put it all together
+    df_page = data.frame(name, city, postalCode, address, url, longitude, latitude)
+    
+    df2 <- rbind(df2, df_page)
+    
+  }
   
-#extract names out of venues
- name <- map_chr(venues, "name", .default=NA)
+  return(df2)
   
-
-
-#extract city out of venues
-city_list <- map(venues, "city")
-city <- map_chr(city_list, "name",.default=NA)
-
-#extract postal code out of venues
-postalCode <- as.double(map_chr(venues, "postalCode", .default = NA))
-
-#extract address form venues
-address_list <- map(venues, "address")
-address <- map_chr(address_list, "line1", .default = NA)
-
-#extract url from venues
-url <- map_chr(venues, "url", .default = NA)
-
-#extract longitude and magnitude
-location <- map(venues, "location")
-longitude <- as.double(map_chr(location, "longitude", .default = NA))
-latitude <- as.double(map_chr(location, "latitude", .default = NA))
-
-#put it all together
-df_page = data.frame(name, city, postalCode, address, url, longitude, latitude)
-
-df2 <- rbind(df2, df_page)
-
-}
-return(df2)
 }
 
-dfde <-df("DE")
+dfde <- df("DE")
+
 ```
 ##Exercise 10
 ```{r}
 ggplot(dfde) +
-geom_point(aes(longitude, latitude))+
-borders("world", "Germany", colour = "black", fill = "grey90") +
-  geom_point(aes(longitude, latitude), alpha=0.3)+
-theme_void() +
-coord_quickmap() +
-labs(title = "Event locations across Germany",
-caption = "Source: ticketmaster.com") +
-theme(title = element_text(size=8, face='bold'),
-plot.caption = element_text(face = "italic"))
+  borders("world",
+          "Germany",
+          colour = "black",
+          fill = "grey90") +
+  geom_point(aes(longitude, latitude), alpha = 0.3) +
+  theme_void() +
+  coord_quickmap() +
+  labs(title = "Event locations across Germany",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
 
 ```
+Exercise 11
+```{r}
+dfde$longitude[dfde$longitude < 5.866] <- NA
+dfde$longitude[dfde$longitude > 15.042] <- NA
+dfde$latitude[dfde$latitude < 47.270] <- NA
+dfde$latitude[dfde$latitude > 55.059] <- NA
 
+
+
+ggplot(dfde) +
+  borders("world",
+          "Germany",
+          colour = "black",
+          fill = "grey90") +
+  geom_point(aes(longitude, latitude), alpha = 0.3) +
+  theme_void() +
+  coord_quickmap() +
+  labs(title = "Event locations across Germany",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
+
+```
+Exercise 11
+```{r}
+dflux <- df("LU")
+
+dflux$longitude[dflux$longitude < 5.733333] <- NA
+dflux$longitude[dflux$longitude > 6.533333] <- NA
+dflux$latitude[dflux$latitude < 49.447778] <- NA
+dflux$latitude[dflux$latitude > 50.182944] <- NA
+
+
+
+ggplot(dflux) +
+  borders("world",
+          "Luxembourg",
+          colour = "black",
+          fill = "grey90") +
+  geom_point(aes(longitude, latitude), alpha = 0.3) +
+  theme_void() +
+  coord_quickmap() +
+  labs(title = "Event locations across Germany",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
+
+```
 
 
