@@ -22,18 +22,17 @@ library(tidyverse)
 ##Exercise 7+8
 ```{r}
 #load key
-
 source("C:/Users/johan_nii2lon/OneDrive/Desktop/Data Science Porject Management/Assigements/Assignment 5/Api_key.R")
 
+#request
 apicountry <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/", 
             query = list(apikey = api_key,
                         "countryCode"= "DE"))
 
 apiconde <- content(apicountry)
 
+#extract venue list
 venues <- apiconde$`_embedded`$venues
-
-length(venues)
 
 #extract names out of venues
 name <- map_chr(venues, "name")
@@ -52,7 +51,7 @@ address <- map_chr(address_list, "line1", .default = NA)
 #extract url from venues
 url <- map_chr(venues, "url")
 
-#extract longitude and magnitude
+#extract longitude and latitude
 location <- map(venues, "location")
 longitude <- as.double(map_chr(location, "longitude", .default = NA))
 latitude <- as.double(map_chr(location, "latitude", .default = NA))
@@ -67,20 +66,28 @@ head(df)
 
 ##Exercise 9
 ```{r}
+#create function for df with country code as input
 df <- function(country) {
   apicountry <-
     GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
         query = list(apikey = api_key,
-                     "countryCode" = country))
+                   "countryCode" = country))
+  #suspend execution
   Sys.sleep(0.2)
   apiconde <- content(apicountry)
+  
+  #get number of pages and number of entries per page
   page <- apiconde$page$totalPages
   entries <- apiconde$page$page$size
   
+  # create empty list for venues and empty df for results
   venues <- list()
   df2 <- tibble()
   
+  #loop the request and the extraction of the data over all pages
   for (i in 0:(page - 1)) {
+    
+    #if venues is NULL run the request again
     venues <- NULL
     while (is.null(venues)) {
       api <- GET(
@@ -94,17 +101,10 @@ df <- function(country) {
       content <- content(api)
       
       venues <- content$`_embedded`$venues
-      
-    }
-    if (i == page - 1) {
-      entries = apiconde$page$totalElements %% entries
-    }
-    
+      }
     
     #extract names out of venues
     name <- map_chr(venues, "name", .default = NA)
-    
-    
     
     #extract city out of venues
     city_list <- map(venues, "city")
@@ -133,16 +133,18 @@ df <- function(country) {
     df2 <- rbind(df2, df_page)
     
   }
-  
+  #return dataframe 
   return(df2)
   
 }
 
+#dataframe for Germany
 dfde <- df("DE")
 
 ```
 ##Exercise 10
 ```{r}
+#plot venues in a map of germany
 ggplot(dfde) +
   borders("world",
           "Germany",
@@ -159,13 +161,14 @@ ggplot(dfde) +
 ```
 Exercise 11
 ```{r}
+#get rid of wrongly classified veneus 
 dfde$longitude[dfde$longitude < 5.866] <- NA
 dfde$longitude[dfde$longitude > 15.042] <- NA
 dfde$latitude[dfde$latitude < 47.270] <- NA
 dfde$latitude[dfde$latitude > 55.059] <- NA
 
 
-
+#plot again
 ggplot(dfde) +
   borders("world",
           "Germany",
@@ -182,15 +185,17 @@ ggplot(dfde) +
 ```
 Exercise 11
 ```{r}
+#data frame for luxegmbourg
 dflux <- df("LU")
 
+#get rid of wrongly classified venues
 dflux$longitude[dflux$longitude < 5.733333] <- NA
 dflux$longitude[dflux$longitude > 6.533333] <- NA
 dflux$latitude[dflux$latitude < 49.447778] <- NA
 dflux$latitude[dflux$latitude > 50.182944] <- NA
 
 
-
+#plot venues into map of luxembourg
 ggplot(dflux) +
   borders("world",
           "Luxembourg",
