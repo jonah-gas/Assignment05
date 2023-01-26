@@ -4,8 +4,10 @@ author: 'Jonah Gasparro (Student ID: 6307095)'
 date: "`r Sys.Date()`"
 output: html_document
 ---
+link to git:
+https://github.com/jonah-gas/Assignment05.git
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 #set working directory 
 setwd("C:/Users/johan_nii2lon/OneDrive/Desktop/Data Science Porject Management/Assigements/Assignment 5/Assignment05")
 
@@ -19,14 +21,15 @@ library(tidyverse)
 ```
 
 
-##Exercise 7+8
-```{r}
+Exercise 7+8
+```{r, , warning=FALSE, message=FALSE}
 #load key
 source("C:/Users/johan_nii2lon/OneDrive/Desktop/Data Science Porject Management/Assigements/Assignment 5/Api_key.R")
 
 #request
 apicountry <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/", 
             query = list(apikey = api_key,
+                         "locale" = "*",
                         "countryCode"= "DE"))
 
 apiconde <- content(apicountry)
@@ -64,13 +67,14 @@ head(df)
 ```
 
 
-##Exercise 9
-```{r}
+Exercise 9
+```{r, , warning=FALSE, message=FALSE}
 #create function for df with country code as input
 df <- function(country) {
   apicountry <-
     GET(url = "https://app.ticketmaster.com/discovery/v2/venues/",
         query = list(apikey = api_key,
+                      "locale" = "*",
                    "countryCode" = country))
   #suspend execution
   Sys.sleep(0.2)
@@ -94,6 +98,7 @@ df <- function(country) {
         url = "https://app.ticketmaster.com/discovery/v2/venues/",
         query = list(
           apikey = api_key,
+           "locale" = "*",
           "countryCode" = country,
           page = i
         )
@@ -141,9 +146,11 @@ df <- function(country) {
 #dataframe for Germany
 dfde <- df("DE")
 
+head(dfde)
+
 ```
-##Exercise 10
-```{r}
+Exercise 10
+```{r, , warning=FALSE, message=FALSE}
 #plot venues in a map of germany
 ggplot(dfde) +
   borders("world",
@@ -159,9 +166,12 @@ ggplot(dfde) +
         plot.caption = element_text(face = "italic"))
 
 ```
+
+
+
 Exercise 11
-```{r}
-#get rid of wrongly classified veneus 
+```{r, , warning=FALSE, message=FALSE}
+#get rid of falsely as Germany classified venues 
 dfde$longitude[dfde$longitude < 5.866] <- NA
 dfde$longitude[dfde$longitude > 15.042] <- NA
 dfde$latitude[dfde$latitude < 47.270] <- NA
@@ -183,12 +193,15 @@ ggplot(dfde) +
         plot.caption = element_text(face = "italic"))
 
 ```
-Exercise 11
-```{r}
-#data frame for luxegmbourg
+
+
+
+Exercise 12
+```{r, warning=FALSE, message=FALSE}
+#data frame for Luxembourg
 dflux <- df("LU")
 
-#get rid of wrongly classified venues
+#get rid of falsely as Luxembourg classified venues
 dflux$longitude[dflux$longitude < 5.733333] <- NA
 dflux$longitude[dflux$longitude > 6.533333] <- NA
 dflux$latitude[dflux$latitude < 49.447778] <- NA
