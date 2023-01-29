@@ -146,7 +146,8 @@ df <- function(country) {
 #dataframe for Germany
 dfde <- df("DE")
 
-head(dfde)
+print(dim(dfde))
+print(head(dfde, 10))
 
 ```
 Exercise 10
@@ -200,6 +201,8 @@ Exercise 12
 ```{r, warning=FALSE, message=FALSE}
 #data frame for Luxembourg
 dflux <- df("LU")
+print(dim(dflux))
+head(dflux, 10)
 
 #get rid of falsely as Luxembourg classified venues
 dflux$longitude[dflux$longitude < 5.733333] <- NA
